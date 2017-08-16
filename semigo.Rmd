@@ -5,41 +5,65 @@ date: "2017년 8월 16일"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
+# 작업공간 설정
+```{r kingcounty}
+
+getwd()
+setwd("D:/")
+# rm(list=ls())
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+# 데이터 읽어오기
+```{r kingcounty}
+kc_house <- readxl::read_excel(path      = "kc_house_data.xlsx",
+                               sheet     = 1,
+                               col_names = TRUE)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+##GGpairs 사용.  - 상관관계 
+# Splitting the Data Set
+```{r kingcounty}
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+ratio = sample(1:nrow(kc_house), size = 0.25*nrow(kc_house))
+Test = kc_house[ratio,] #Test dataset 25% of total
+Training = kc_house[-ratio,] #Train dataset 75% of total
+
+##  price, bedrooms, bathrooms, sqft_living and sqft lot
+plot1<-ggpairs(data=kc_house, columns=3:7,
+               mapping = aes(color = "dark green"),
+               axisLabels="show")
+plot1
+
+##  price, floors, waterfront, view, condition and grade
+plot2<-ggpairs(data=Training, columns=c(3,8:12),
+               mapping = aes(color = "dark green"),
+               axisLabels="show")
+plot2
+
+##  price, yr built, lat and long
+plot3=ggpairs(data=Training, columns=c(3,15,18,19),
+              mapping = aes(color = "dark green"),
+              axisLabels="show")
+plot3
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r kingcounty}
 
-#### package ####
+```
 
-# install.packages("repr")
-# install.packages("IRdisplay")
-# install.packages("evaluate")
-# install.packages("crayon")
-# install.packages("pbdZMQ")
-# install.packages("devtools")
-# install.packages("uuid")
-# install.packages("nnet")
+# devtools::install_github("IRkernel/IRkernel")
+# IRkernel::installspec()
+# IRkernel::installspec(user = FALSE)
 
+# install.packages(c('crayon', 'pbdZMQ', 'devtools'))
+# devtools::install_github(paste0('IRkernel/', c('repr', 'IRdisplay', 'IRkernel')))
+
+# IRkernel::installspec()
+# IRkernel::installspec(user = FALSE)
+                               
+```{r library}
 library(repr)
 library(IRdisplay)
 library(evaluate)
@@ -49,88 +73,31 @@ library(devtools)
 library(uuid)
 library(digest)
 library(nnet)
-# 
-# devtools::install_github("IRkernel/IRkernel")
-# 
-# IRkernel::installspec()
-# IRkernel::installspec(user = FALSE)
-# 
-# #
-# install.packages(c('crayon', 'pbdZMQ', 'devtools'))
-# devtools::install_github(paste0('IRkernel/', c('repr', 'IRdisplay', 'IRkernel')))
-# 
-# IRkernel::installspec()
-# IRkernel::installspec(user = FALSE)
-# 
-# 
-# 
-# 
-# install.packages("ggmap")
-# install.packages("ggplot2")
-# install.packages("readxl")
-# install.packages("data.table")
-# install.packages("DT")
-# 
-# install.packages("psych")
-# install.packages("Hmisc")
-# 
-# install.packages("agricolae")
-# install.packages("rvest")
-# 
-# install.packages("corrplot")
-# install.packages("lm.beta")
-# install.packages("mlbench")
-
-
 library(ggplot2)
 library(ggmap)
 library(readxl)
 library(data.table)
 library(DT)
-
 library(psych)
 library(Hmisc)
-
 library(agricolae)
 library(rvest)
 library(corrplot)
 library(lm.beta)
 library(mlbench)
-
-# rm(list=ls())
-
-# 작업공간 설정
-getwd()
-setwd("D:/")
-
-# 데이터 읽어오기
-kc_house <- readxl::read_excel(path      = "kc_house_data.xlsx",
-                               sheet     = 1,
-                               col_names = TRUE)
+```
 
 #### data summary ####
+
+```{r kingcounty}
+
 str(kc_house)
 head(kc_house)
 summary(kc_house)
-
-#### 미국집값을 시계열 자료로 보여주기 ####
-head(sort(date_numeric))                    # 20140502 ~ (31+28+31+30+2 = 122) 365-122=243
-head(sort(date_numeric, decreasing = TRUE)) # ~ 20150527 (31+28+31+30+27= 147) 365-147=218
-365/2
-house_price_ts <- ts(kc_house$price, start = c(2014, 182), end = c(2015, 182), frequency = 365)
-plot(house_price_ts, ylab = "Kingcounty House Price", xlab = "Year.Month",
-     xlim = c(2014.5, 2015.5))
-
-# 이건 의미없어보임
-house_price_ts <- ts(iqr_price, frequency = 365)
-plot(house_price_ts, ylab = "Kingcounty House Price", xlab = "Year.Month")
-
-par(mfrow = c(1,2))
-acf(house_price_ts) # 파란색 점선 밑에 그래프가 있어야 유의한것이다!
-pacf(house_price_ts) 
-ndiffs(house_price_ts) # 0
+```
 
 # 아주 강력한 function! auto.arima
+```{r kingcounty}
 houseBest <- auto.arima(x = house_price_ts)
 houseBest   
 
@@ -139,43 +106,25 @@ library(scales)
 forecast(houseBest, h = 5) -> houseforecast # 80%, 95% 신뢰구간이 같이 나옴
 plot(houseforecast)
 
-
-
-
-
-
+```
 
 #### 정규성 검정 ####
 # 이부분은 zipcode 변수에 대한 설명을 할때 넣어줄것
 
 # by(A, B, shapiro.test) # B에 있는 모든 집단의 A값에 대해 정규성 검정을 한다
+
+```{r kingcounty 정규성 검정}
 A <- by(kc_house$price, kc_house$zipcode, shapiro.test)
-
 ## p-value > 0.05인 zipcode group
-
-###
-#   kc_house$zipcode: 98002
-# 
-#       Shapiro-Wilk normality test
-# 
-# data:  dd[x, ]
-# W = 0.99639, p-value = 0.9243
-###
-# kc_house$zipcode: 98108
-# 
-#       Shapiro-Wilk normality test
-# 
-# data:  dd[x, ]
-# W = 0.99176, p-value = 0.3707
-###
-
-
+```
 
 
 #### all_data correlation ####
 # 변수들 간에 상관관계 -> 모든 변수를 numeric으로 만들어야 가능!
-
 # date 변수를 numeric으로 바꾸기
+```{r kingcounty}
+
+
 date_numeric <- substr(kc_house$date, 1, 8) # 20141124 형태로 연도날짜 문자부분만 추출
 is.numeric(date_numeric)      # FALSE
 
@@ -201,6 +150,49 @@ pairs(house_cor,
       pch = 19, 
       bg  = c("red", "green", "blue"))  # 행렬모양 산점도
 corrplot(house_cor)
+```
+
+
+#### 미국집값을 시계열 자료로 보여주기 ####
+
+```{r kingcounty}
+
+
+head(sort(date_numeric))                    # 20140502 ~ (31+28+31+30+2 = 122) 365-122=243
+head(sort(date_numeric, decreasing = TRUE)) # ~ 20150527 (31+28+31+30+27= 147) 365-147=218
+365/2
+house_price_ts <- ts(kc_house$price, start = c(2014, 182), end = c(2015, 182), frequency = 365)
+plot(house_price_ts, ylab = "Kingcounty House Price", xlab = "Year.Month",
+     xlim = c(2014.5, 2015.5))
+
+```
+
+
+#### 미국집값을 시계열 자료로 보여주기 ####
+```{r kingcounty}
+head(sort(date_numeric))                    # 20140502 ~ (31+28+31+30+2 = 122) 365-122=243
+head(sort(date_numeric, decreasing = TRUE)) # ~ 20150527 (31+28+31+30+27= 147) 365-147=218
+365/2
+house_price_ts <- ts(kc_house$price, start = c(2014, 182), end = c(2015, 182), frequency = 365)
+plot(house_price_ts, ylab = "Kingcounty House Price", xlab = "Year.Month",
+     xlim = c(2014.5, 2015.5))
+```
+
+# 이건 의미없어보임
+```{r kingcounty}
+
+house_price_ts <- ts(iqr_price, frequency = 365)
+plot(house_price_ts, ylab = "Kingcounty House Price", xlab = "Year.Month")
+
+par(mfrow = c(1,2))
+acf(house_price_ts) # 파란색 점선 밑에 그래프가 있어야 유의한것이다!
+pacf(house_price_ts) 
+ndiffs(house_price_ts) # 0
+```
+
+
+```{r kingcounty}
+
 # 상관원계수가 클수록 크기가 크고 색깔이 진하다
 # 양수면 파란색, 음수면 붉은색
 corrplot(house_cor, method = "number")    # 수와 색깔로 표현
@@ -215,7 +207,9 @@ corrplot(house_cor,
          tl.srt = 45,           # 변수명 45도 기울임
          diag   = FALSE)            # 대각행렬 제외
 
+```
 
+```{r kingcounty}
 # 종속변수 : price
 summary(kc_house$price)
 #   Min. 1st Qu.  Median   Mean  3rd Qu.   Max. 
@@ -238,6 +232,7 @@ low_25_price[[1]]
 
 hist(iqr_price_numeric)
 boxplot(iqr_price_numeric)
+```
 
 # 상관관계가 높은 변수들 ( > 0.5)
 # sqft_lot15    - sqft_lot      : 0.72  # 둘다 삭제
@@ -273,7 +268,7 @@ boxplot(iqr_price_numeric)
 # sqft_above    - grade         : 0.76  #
 # zipcode       - long          : -0.56 #
 
-#
+```{r kingcounty}
 plot(kc_house$bathrooms, kc_house$yr_built)  # 최근에 지어진 집일수록 화장실수가 많다
 plot(kc_house$price, kc_house$bathrooms)     # 가격이 높을수록 화장실수가 많다
 plot(kc_house$grade, kc_house$bathrooms)     # grade가 높을수록 화장실 수가 많다
@@ -284,13 +279,20 @@ plot(kc_house$sqft_living, kc_house$grade)   # living 면적이 높을수록 grade가 높
 plot(kc_house$sqft_above, kc_house$grade)    # 지상층 면적이 높을수록 grade가 높다
 plot(kc_house$zipcode, kc_house$long)        # zipcode가 높을수록 대체로 경도가 낮다
 
+```
+
+```{r kingcounty}
 
 cor.test(kc_house$grade, kc_house$price)
 plot(kc_house$grade, kc_house$price, ylab = "Price", xlab = "Grade")         # grade가 높을수록 가격이 높다
 
-#### google map ####
+```
 
+#### google map ####
 # 집의 위치를 구글지도에 뿌리기
+
+```{r kingcounty}
+
 summary(kc_house$long)
 #    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 # -122.5  -122.3  -122.2  -122.2  -122.1  -121.3 
@@ -317,45 +319,53 @@ house_map + ggplot2::geom_point(
   data = high_25_loc,
   aes(x = long, y = lat),
   colour="red")
+```
+
 
 #### data anlaysis ####
-
 # kc_house data : data.frame -> data.table로 변환
+```{r kingcounty}
+
 as.data.table(kc_house)
 View(kc_house)
-
+```
 
 #### 1. 주택이 오래된 정도 - price : 상관관계__NO ####
 # 주택이 지어진 정도는 가격과 상관관계가 없다고 볼 수 있다
+```{r kingcounty}
+
+
 summary(kc_house$yr_built)
-#  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-# 1900    1951    1975    1971    1997    2015
 
 house_age = 2017 - kc_house$yr_built
 summary(house_age)
-#  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# 2.00   20.00   42.00   45.99   66.00  117.00 
 
 cor(house_age, kc_house$price)  # -0.054
 cor.test(house_age, kc_house$price)
 plot(house_age, kc_house$price)
 
+```
+
 
 #### 2. renovate의 여부에 따른 price 차이 : 양측 가설검정, 상관관계__YES ####
 # renovate 된 group의 집값이 renovate 안된 group의 집값보다 높다
+
+```{r kingcounty}
 renovate_house <- kc_house[kc_house$yr_renovated != 0, "price"] # renovate 된 집들의 가격
 not_renovate_house <- kc_house[kc_house$yr_renovated == 0, "price"] # renovate 안된 집들의 가격
 
 t.test(renovate_house[[1]], not_renovate_house[[1]])
 # p-value < 2.2e-16 이므로 두그룹의 평균은 같지 않다.(H0 기각)
-#     mean of x   mean of y 
-#     760379.0    530360.8 
 
+
+```
 
 #### 3. zipcode(98001~98119) group 별 price 차이 : ANOVA ___________진행중 ####
 #   지도에 뿌려보고 group으로 묶을 수 있는지
 
 # zipcode group (1~10, 11~20, 21~30, 31~40, 41~50)
+```{r kingcounty}
+
 zipcode_1_10_loc  <- kc_house[(kc_house$zipcode >= 98001)&(kc_house$zipcode <= 98010), c("long", "lat")]
 zipcode_11_20_loc <- kc_house[(kc_house$zipcode >= 98011)&(kc_house$zipcode <= 98020), c("long", "lat")]
 zipcode_21_30_loc <- kc_house[(kc_house$zipcode >= 98021)&(kc_house$zipcode <= 98030), c("long", "lat")]
@@ -380,8 +390,10 @@ house_map + ggplot2::geom_point(data = zipcode_1_10_loc,
   ggplot2::geom_point(data = zipcode_41_50_loc,
                       aes(x = long, y = lat),
                       colour="blue")
+```
 
 # zipcode group (1로끝나는애들, 2로끝나는애들)
+```{r kingcounty}
 zipcode__1_loc <- kc_house[kc_house$zipcode == grep("1$", kc_house$zipcode, value = TRUE), c("long", "lat")]
 zipcode__2_loc <- kc_house[kc_house$zipcode == grep("2$", kc_house$zipcode, value = TRUE), c("long", "lat")]
 zipcode__3_loc <- kc_house[kc_house$zipcode == grep("3$", kc_house$zipcode, value = TRUE), c("long", "lat")]
@@ -395,8 +407,11 @@ house_map + ggplot2::geom_point(data = zipcode__1_loc,
   ggplot2::geom_point(data = zipcode__3_loc,
                       aes(x = long, y = lat),
                       colour="yellow")
+```
 
 # zipcode >= 98100 group plot
+```{r kingcounty}
+
 plot(kc_house$zipcode, kc_house$lat)
 par(new = T)
 plot(kc_house$zipcode, kc_house$long, col="red")
@@ -410,6 +425,9 @@ house_map + ggplot2::geom_point(data = zipcode_98001_loc,
   ggplot2::geom_point(data = zipcode_98100_loc,
                       aes(x = long, y = lat),
                       colour="orange")
+```
+
+```{r kingcounty}
 
 # 해안가 집의 zipcode
 sort(table(kc_house[kc_house$waterfront == 1, "zipcode"]), decreasing = TRUE)
@@ -418,10 +436,12 @@ sort(table(kc_house[kc_house$waterfront == 1, "zipcode"]), decreasing = TRUE)
 # price 상위 25% 이상인 집의 zipcode
 sort(table(kc_house[kc_house$price >= 645000, "zipcode"]), decreasing = TRUE)
 # 6,4,75,40,52,33,74
-
+```
 
 
 #### 3-1. zipcode 별로 학교수 차이가 가격에 영향을 미치나?__NO ####
+```{r kingcounty}
+
 kc_house <- readxl::read_excel(path      = "kc_house_data.xlsx",
                                sheet     = 1,
                                col_names = TRUE)
@@ -432,15 +452,24 @@ zipcode_school <- readxl::read_excel(path      = "zipcode_school.xlsx",
 str(zipcode_school)
 head(zipcode_school)
 kc_house_DT <- as.data.table(kc_house)
+```
+
+
 # 원데이터 kc_house와 zipcode_school 데이터를 join 해서 kc_house에 넣어줌
+```{r kingcounty}
 kc_house <- merge(kc_house, zipcode_school, by = "zipcode", all = TRUE)
 View(kc_house)
+```
 
 # 학교수 내림차순으로 zipcode 정렬
+```{r kingcounty}
 x <- kc_house[order(kc_house$school_to, decreasing = TRUE) , c("zipcode","school_to")]
 unique(x) # 중복값 제거
+```
+
 
 # price 내림차순으로 zipcode 정렬
+```{r kingcounty}
 kc_house[order(kc_house$price, decreasing = TRUE) , c("price","zipcode")]
 
 cor(zipcode_price_group[,2][[1]], zipcode_price_group[,7][[1]]) # el - price  # -0.2
@@ -452,12 +481,13 @@ cor.test(zipcode_price_group[,2][[1]], zipcode_price_group[,7][[1]]) # el - pric
 cor.test(zipcode_price_group[,3][[1]], zipcode_price_group[,7][[1]]) # mi - price  # -0.2
 cor.test(zipcode_price_group[,4][[1]], zipcode_price_group[,7][[1]]) # hi - price  # -0.3
 cor.test(zipcode_price_group[,5][[1]], zipcode_price_group[,7][[1]]) # to - price  # -0.3
+```
 
 
 # zip_group_i <- for(i in 1:70){
 #   print(zipcode_price_group[i,])
 # }
-# 
+
 # dummies <- data.frame(matrix(nrow = nrow(kc_house),ncol = 20))
 # for(i in 1:20){
 #   dummies[,i] <- ifelse(kc_house$cluster == i, 1, 0)
@@ -468,31 +498,35 @@ cor.test(zipcode_price_group[,5][[1]], zipcode_price_group[,7][[1]]) # to - pric
 #### 3-2. price가 비슷한 zipcode 별로 group화 ####
 
 # zipcode 별 price의 평균을 group화
+```{r kingcounty}
 kc_house_DT <- as.data.table(kc_house)
+```
 # zipcode_price_group <- kc_house_DT[ , list(n = .N,
 #                                            Mean = mean(price)),
 #                                    by = list(zipcode)]
 
+
+```{r kingcounty}
 zipcode_price_group <- kc_house_DT[ , list(n = .N,
                                            Mean = mean(price)),
                                     by = list(zipcode, 
                                               school_el, school_mi,
                                               school_hi, school_to)]
+```
+
+```{r kingcounty}
 head(zipcode_price_group)
 zipcode_price_group[sort(zipcode_price_group$Mean, decreasing = TRUE),c("zipcode","Mean")]
 
 zipcode_price_group_DT <- as.data.table(zipcode_price_group)
 zipcode_price_group_DT <- zipcode_price_group_DT[order(Mean, decreasing = TRUE) , ]
+```
+
+```{r kingcounty}
 summary(zipcode_price_group_DT)
+```
 
-#      Mean        
-# Min.   : 234284  
-# 1st Qu.: 354126  
-# Median : 491952  
-# Mean   : 560774  
-# 3rd Qu.: 645438  
-# Max.   :2160607  
-
+```{r kingcounty}
 zipcode_group_1 <- zipcode_price_group_DT[1, "zipcode"]
 zipcode_group_2 <- zipcode_price_group_DT[2, "zipcode"]
 zipcode_group_3 <- zipcode_price_group_DT[3, "zipcode"]
@@ -505,10 +539,10 @@ zipcode_group_9 <- zipcode_price_group_DT[26:34, "zipcode"]
 zipcode_group_10 <- zipcode_price_group_DT[35:48, "zipcode"]
 zipcode_group_11 <- zipcode_price_group_DT[49:61, "zipcode"]
 zipcode_group_12 <- zipcode_price_group_DT[62:70, "zipcode"]
+```
 
-# house_clustering12 <- kmeans(scale(zipcode_price_group_DT[1,7]), centers = 3, iter.max = 100, trace = FALSE)
-# kc_house$cluster <- factor(house_clustering12$cluster)
 
+```{r kingcounty}
 dummies <- data.frame(matrix(nrow = nrow(kc_house), ncol = 12))
 
 dummies[,1] <- ifelse(kc_house$zipcode == zipcode_group_1, 1, 0)
@@ -523,52 +557,58 @@ dummies[,9] <- ifelse(kc_house$zipcode == zipcode_group_9, 1, 0)
 dummies[,10] <- ifelse(kc_house$zipcode == zipcode_group_10, 1, 0)
 dummies[,11] <- ifelse(kc_house$zipcode == zipcode_group_11, 1, 0)
 dummies[,12] <- ifelse(kc_house$zipcode == zipcode_group_12, 1, 0)
+```
 
+
+```{r kingcounty}
 for(i in 1:12){
   dummies[,i] <- ifelse(kc_house$cluster == zipcode_group_i, 1, 0)
 }
+```
 
+
+```{r kingcounty}
 kc_house_data <- cbind(kc_house, dummies)
 View(head(kc_house_data))
+```
 
+```{r kingcounty}
 DT::datatable(head(kc_house_data))
+```
+
 #### 4. 크기에 대한 변수의 group에 대한 price 차이 : 상관관계 분석__YES ####
 # bedrooms, bathrooms, floors 데이터 모델링 하기
+
+```{r kingcounty}
 
 cor(kc_house$bedrooms, kc_house$price)    # 0.308
 cor(kc_house$bathrooms, kc_house$price)   # 0.525
 cor(kc_house$floors, kc_house$price)      # 0.257
 cor(kc_house$sqft_living, kc_house$price) # 0.702
 cor(kc_house$sqft_lot, kc_house$price)    # 0.090  # 제외!
+```
+
+```{r kingcounty}
 
 0.308 + 0.525 + 0.257 + 0.702 = 1.792
+
 kc_house_data$room_newnum = kc_house$bedrooms*0.308 + kc_house$bathrooms*0.525 + kc_house$floors*0.257 + kc_house$sqft_living*0.702
 # kc_house$room_rum_2 = kc_house$bedrooms*0.308/1.792 + kc_house$bathrooms*0.525/1.792 + kc_house$floors*0.257/1.792 + kc_house$sqft_living*0.702/1.792
+```
 
+
+```{r kingcounty}
 cor(kc_house$room_newnum, kc_house$price)  # 0.702
+```
 
-#
-# names(kc_house)
-# RgFit <- lm(Y ~ X, data = R1)
-# # (Intercept)     bedrooms    bathrooms  sqft_living     sqft_lot       floors  
-# #   8.066e+04   -5.953e+04    6.958e+03    3.143e+02   -3.788e-01   -1.758e+03 
-# C <- -5.953e+04 + 6.958e+03 + 3.143e+02 + -3.788e-01 + -1.758e+03
-# c <- c(-5.953e+04/C, 6.958e+03/C, 3.143e+02/C, -3.788e-01/C, -1.758e+03/C)
-# c[1]+c[2]+c[3]+c[4]+c[5]
-# 
-# reg_rum <- lm(price ~ bedrooms + bathrooms + sqft_living + sqft_lot + floors, data = kc_house)
-# summary(reg_rum)
-# 
-# kc_house$bedrooms
-# kc_house$bathrooms
-# kc_house$sqft_living
-# kc_house$sqft_lot
-# kc_house$floors
-
-
+```{r kingcounty}
+names(kc_house)
+RgFit <- lm(Y ~ X, data = R1)
+```
 
 #### 5. waterfront 1, 0 에 따른 price 차이 : 양측 가설검정__YES ####
 # 해안가(=1)group의 price  >  해안가가 아닌(=0) group의 price
+```{r kingcounty}
 waterfront_T <- kc_house[kc_house$waterfront == 1, c("long", "lat")]
 waterfront_F <- kc_house[kc_house$waterfront == 0, c("long", "lat")]
 
@@ -581,14 +621,21 @@ house_map + ggplot2::geom_point(data = waterfront_T,
                                   colour="orange")
 waterfront_T_price <- kc_house[kc_house$waterfront == 1, "price"]
 waterfront_F_price <- kc_house[kc_house$waterfront == 0, "price"]
+```
+
+
+```{r kingcounty}
 summary(waterfront_T_price[[1]])
 summary(waterfront_F_price[[1]])
 t.test(waterfront_T_price[[1]], waterfront_F_price[[1]])
+```
 
-
-
+```{r kingcounty}
 t.test(waterfront_T_price[[1]], high_25_price[[1]])
 boxplot(waterfront_T_price[[1]], high_25_price[[1]])
+```
+
+
 
 #### 6. 팔린날짜(봄/여름/가을/겨울) 별 price 차이 : ANOVA_YES ####
 
@@ -605,55 +652,102 @@ boxplot(waterfront_T_price[[1]], high_25_price[[1]])
 # 여름  0.02386  0.0001824
 # 가을  0.1365
 
+
 # date "20141013T000000" -> data_numeric "20141013"
+```{r kingcounty}
 head(date_numeric)
+```
+
+
+
 
 # 새로운 변수 생성
+```{r kingcounty}
+
 kc_house$date_numeric = date_numeric
+```
+
 
 # 집이 팔린 날짜가
 # 봄(3,4,5월) / 여름(6,7,8월) / 가을(9,10,11월) / 겨울(12,1,2월) 별로 price 그룹화
+```{r kingcounty}
+
 spr_price <- kc_house[grep("....03..|....04..|....05..", date_numeric), "price"]
 sum_price <- kc_house[grep("....06..|....07..|....08..", date_numeric), "price"]
 fal_price <- kc_house[grep("....09..|....10..|....11..", date_numeric), "price"]
 win_price <- kc_house[grep("....12..|....01..|....02..", date_numeric), "price"]
+```
 
+```{r kingcounty}
 mean(spr_price[[1]]) # 552603.2
 mean(sum_price[[1]]) # 546782.0
 mean(fal_price[[1]]) # 530846.5
 mean(win_price[[1]]) # 519221.2
+```
 
+```{r kingcounty}
 length(spr_price[[1]]) + length(sum_price[[1]]) + length(fal_price[[1]]) + length(win_price[[1]]) 
 # 21613  "전체를 다 가져왔는지 확인" OK
+```
 
+
+```{r kingcounty}
 seson_price <- c(spr_price[[1]], sum_price[[1]], fal_price[[1]], win_price[[1]])
 
+```
+
+
+```{r kingcounty}
 group <- c(rep(1, length(spr_price[[1]])),
            rep(2, length(sum_price[[1]])),
            rep(3, length(fal_price[[1]])),
            rep(4, length(win_price[[1]])))
 length(group) # 21613
+```
 
+
+```{r kingcounty}
 head( cbind(seson_price, group) )
 tail( cbind(seson_price, group) )
+```
+
+
+```{r kingcounty}
 cbind(seson_price, group)
 boxplot(seson_price ~ group, xlab = "계절(봄, 여름, 가을, 겨울)", ylab = "Price")
 describe.by(seson_price, group)  # 그룹별 기술통계량 계산
 ANO_R<-aov(seson_price ~ group)
+```
+
+```{r kingcounty}
 anova(ANO_R)
+```
+
+
+```{r kingcounty}
 scheffe.test(ANO_R, "group", alpha = 0.05, console = TRUE)
+```
+
+
+```{r kingcounty}
 LSD.test(ANO_R, "group", alpha = 0.05, console = TRUE)
+```
+
+
+```{r kingcounty}
 duncan.test(ANO_R, "group", alpha = 0.05, console = TRUE)
+```
 
+
+```{r kingcounty}
 t.test(fal_price[[1]], win_price[[1]])
-
-
-
+```
 
 
 #### 7. 집 보러온 횟수 - price : ANOVA_YES ####
 # 집 보러온 횟수가 높은 집일수록 집값이 높다
 # 0회 < 1회=2회 < 3회 < 4회
+```{r kingcounty}
 view0_price <- kc_house[kc_house$view == 0,"price"]
 length(view0_price[[1]]) # 19489
 
@@ -668,17 +762,27 @@ length(view3_price[[1]]) # 510
 
 view4_price <- kc_house[kc_house$view == 4,"price"]
 length(view4_price[[1]]) # 319
+```
 
+
+```{r kingcounty}
 mean(view0_price[[1]])    #  496564.2
 mean(view1_price[[1]])    #  812280.8
 mean(view2_price[[1]])    #  792400.9
 mean(view3_price[[1]])    #  971965.3
 mean(view4_price[[1]])    # 1463711
 
+
 view_price <- c(view0_price[[1]], view1_price[[1]], view2_price[[1]], view3_price[[1]], view4_price[[1]])
+
 
 length(view_price)  # 21613
 length(group)       # 21613
+
+```
+
+
+```{r kingcounty}
 
 group <- c(rep(0, 19489),
            rep(1, 332),
@@ -697,16 +801,14 @@ scheffe.test(ANO_R, "group", alpha = 0.05, console = TRUE)
 LSD.test(ANO_R, "group", alpha = 0.05, console = TRUE)
 duncan.test(ANO_R, "group", alpha = 0.05, console = TRUE)
 
+```
+
 
 #### 8. 지하층/지상층 면적과 price와의 관계 : 비율검정, 상관분석__삭제 ####
-
-
-
-
 #### grade, condition 등을 factor로 변환하기_____진행중 ####
-
 #### condition - grade 어떤 차이가 있는지__삭제 ####
 
+```{r kingcounty}
 # 미국 서브프라임 모기지 사태(2007.04) 때 지어진 집의 가격 - 전체 price 차이가 있을까?
 b_2006_price <- kc_house[kc_house$yr_built == 2006, "price"][[1]]
 mean(b_2006_price) # 630880.1  
@@ -731,18 +833,25 @@ mean(b_79_price) # 627596.4
 e_79_price <- kc_house[(kc_house$yr_built < 2007)|(kc_house$yr_built > 2008), "price"][[1]]
 mean(e_79_price) # 536794.3
 t.test(b_79_price, e_79_price) # p-value = 2.932e-08
-
-
+```
 
 #### regression anlaysis ####
-
+```{r kingcounty}
 str(kc_house_data)
 head(kc_house_data)
 ncol(kc_house_data) # 38
+```
+
+
+
+
+
+
+
 
 #### 1. 회귀분석을 위한 kc_house_data 셋팅하기 ####
-
 # date 변수를 numeric으로 바꾸기
+```{r kingcounty}
 date_numeric <- substr(kc_house_data$date, 1, 8) # 20141124 형태로 연도날짜 문자부분만 추출
 is.numeric(date_numeric)      # FALSE
 
@@ -750,15 +859,17 @@ date_numeric <- as.numeric(date_numeric)
 is.numeric(date_numeric)      # TRUE
 
 kc_house_data$date <- date_numeric # 기존의 date를 새로운 numeric date로 대체
-
+```
 
 # 크기를 나타내는 변수들을 묶어주기
+```{r kingcounty}
 kc_house_data$room_newnum = kc_house$bedrooms*0.308 + kc_house$bathrooms*0.525 + kc_house$floors*0.257 + kc_house$sqft_living*0.702
-
 cor(kc_house$room_newnum, kc_house$price)  # 0.702
-
 View(kc_house_data)
+```
 
+
+```{r kingcounty}
 
 #### 2. 회귀모형(회귀분석 결과물) ####
 
@@ -766,41 +877,7 @@ View(kc_house_data)
 house_lm = lm(kc_house_data$price ~ room_newnum + waterfront + view + grade + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12, data = kc_house_data)
 
 summary(house_lm)
-
-# Call:
-#   lm(formula = kc_house_data$price ~ room_newnum + waterfront + 
-#        view + grade + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + 
-#        X10 + X11 + X12, data = kc_house_data)
-# 
-# Residuals:
-#   Min       1Q   Median       3Q      Max 
-# -1168280  -111183   -11201    93153  4695648 
-# 
-# Coefficients:
-#                 Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)   -428984.61   11000.94 -38.995  < 2e-16 ***
-#   room_newnum     219.91       3.37  65.248  < 2e-16 ***
-#   waterfront   596633.57   17493.97  34.105  < 2e-16 ***
-#   view          73086.65    2054.59  35.572  < 2e-16 ***
-#   grade         78201.44    1841.75  42.460  < 2e-16 ***
-#   X1          1210393.45   28972.94  41.777  < 2e-16 ***
-#   X2           631557.38   11627.49  54.316  < 2e-16 ***
-#   X3           359493.57   12361.11  29.083  < 2e-16 ***
-#   X4           467049.42   12554.92  37.200  < 2e-16 ***
-#   X5           335753.53   19958.60  16.822  < 2e-16 ***
-#   X6           187139.64   12507.13  14.963  < 2e-16 ***
-#   X7           118286.47   11234.48  10.529  < 2e-16 ***
-#   X8            64278.26   11002.59   5.842 5.23e-09 ***
-#   X9            85789.09   10854.34   7.904 2.84e-15 ***
-#   X10          -32043.68   12036.78  -2.662  0.00777 ** 
-#   X11         -103019.44   10948.51  -9.409  < 2e-16 ***
-#   X12         -152845.27   13182.95 -11.594  < 2e-16 ***
-#   ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-# 
-# Residual standard error: 203600 on 21596 degrees of freedom
-# Multiple R-squared:  0.6926,   Adjusted R-squared:  0.6924 
-# F-statistic:  3041 on 16 and 21596 DF,  p-value: < 2.2e-16
+```
 
 
 #### 3. 회귀분석 결과물 해석 ####
@@ -817,27 +894,8 @@ summary(house_lm)
 # 귀무가설 : 독립변수는 종속변수에게 영향을 주지 않는다.
 # 대립가설 : 독립변수는 종속변수에게 영향을 준다.
 
-# Coefficients:
-#                 Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)   -428984.61   11000.94 -38.995  < 2e-16 ***
-#   room_newnum     219.91       3.37  65.248  < 2e-16 ***
-#   waterfront   596633.57   17493.97  34.105  < 2e-16 ***
-#   view          73086.65    2054.59  35.572  < 2e-16 ***
-#   grade         78201.44    1841.75  42.460  < 2e-16 ***
-#   X1          1210393.45   28972.94  41.777  < 2e-16 ***
-#   X2           631557.38   11627.49  54.316  < 2e-16 ***
-#   X3           359493.57   12361.11  29.083  < 2e-16 ***
-#   X4           467049.42   12554.92  37.200  < 2e-16 ***
-#   X5           335753.53   19958.60  16.822  < 2e-16 ***
-#   X6           187139.64   12507.13  14.963  < 2e-16 ***
-#   X7           118286.47   11234.48  10.529  < 2e-16 ***
-#   X8            64278.26   11002.59   5.842 5.23e-09 ***
-#   X9            85789.09   10854.34   7.904 2.84e-15 ***
-#   X10          -32043.68   12036.78  -2.662  0.00777 ** 
-#   X11         -103019.44   10948.51  -9.409  < 2e-16 ***
-#   X12         -152845.27   13182.95 -11.594  < 2e-16 ***
-
 # 2단계의 결론 : 유의확률이 0.000이므로 유의수준 0.05에서 독립변수는 종속변수에게 통계적으로 유의한 영향을 준다.
+
 
 
 #### 4. 변수선택 ####
@@ -847,12 +905,13 @@ summary(house_lm)
 # 3. 단계 선택법(Stepwise Selection)  : 나갔던애 다시 들어오고 들어왔던애 다시 나가고
 # 4. 전체 선택
 
+
 # step(회귀분석 결과물, direction = c("forward", "backward", "both"))
+```{r kingcounty}
+
 model.stepwise = step(house_lm, direction = "both")
 summary(model.stepwise)
-
-
-
+```
 
 #### 5. 회귀모형의 설명력 = 독립변수의 설명력 ####
 # R-squared = 설명계수
@@ -873,8 +932,11 @@ summary(model.stepwise)
 #       -> 독립벼수들 간에 선형의 관계가 존재한다.
 #       -> 이 결과가 나온다면 독립변수들 주에 빼는 것을 검토하기
 # car::vif(회귀분석결과)
+```{r kingcounty}
 library(car)
 car::vif(model.stepwise)
+```
+
 
 # 3. 회귀모형의 설명력 : Adjusted R-Square (그냥 R-Square랑 이거랑 둘다 써줘야한다)
 # 2개의 독립변수가 있을때 
@@ -882,15 +944,15 @@ car::vif(model.stepwise)
 # 4. 독립변수들의 영향력 크기 비교
 # 표준화된 회귀계수
 # lm.beta::lm.beta(회귀분석 결과물)
+```{r kingcounty}
 library(lm.beta)
 lm.beta::lm.beta(model.stepwise)
-
-
-
+```
 
 #### 6. 예측(Prediction) ####
-
 # predict(회귀분석결과, newdata = data.frame(complaints = ))  # 여러개면 c()
-predict(model.stepwise, newdata = data.frame(kc_house_data[1,]), interval = "predict") # 점추정?
 
+```{r kingcounty}
+predict(model.stepwise, newdata = data.frame(kc_house_data[1,]), interval = "predict") # 점추정?
 View(kc_house_data[1,])
+```
